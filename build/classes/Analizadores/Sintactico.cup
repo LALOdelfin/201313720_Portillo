@@ -1,0 +1,539 @@
+package Analizadores;
+
+
+import java_cup.runtime.*;
+import java.util.*;
+
+//import Reportes.Reporte;
+//import Reportes.Usuarios;
+
+
+
+parser code
+{:
+
+    public Nodo raiz;
+    //public ArrayList<Usuarios> Lista_crearUsuarios;
+    //public String resultado="";
+
+    
+    /**Metodo al que se llama automáticamente ante algún error sintactico.*/
+    public void syntax_error(Symbol s){
+        System.out.println("Error sintáctico en la Línea " + (s.right) +" Columna "+s.left+ ". Identificador "
+        +s.value + " no reconocido." );
+        //PrincipalForm.LISTA_ERRORES_SINTACTICOS.add(new Parametros("Error Sintáctico "+s.value,PrincipalForm.nombreArchivo,s.right, s.left));
+        report_error("Syntax error " + s.value, cur_token);
+
+}
+
+    /**Metodo al que se llama en el momento en que ya no es posible una recuperación de
+    errores.*/
+    public void unrecovered_syntax_error(Symbol s) throws java.lang.Exception{
+        System.out.println("Error en la Línea " + (s.right)+ " Columna "+s.left+". Identificador " +
+        s.value + " no reconocido.");
+        //PrincipalForm.LISTA_ERRORES_SINTACTICOS.add(new Parametros("Error Sintáctico "+s.value,PrincipalForm.nombreArchivo,s.right, s.left));
+        report_fatal_error("ERROR FATAL", null);
+    }
+:}
+
+action code
+{:
+   //public ArrayList<Usuarios> Lista_crearUsuarios;
+:}
+
+terminal dolar,punto,arroba,comillas,igual;
+terminal icor,fcor, imate, fmate,cons,ptcoma;
+terminal irequest, frequest, iusuario, fusuario;
+terminal iid, fid, ipass, fpass,tiptip, codcod, nomnom, teltel, dirdir, sucursucur, cantcant, propipropi; 
+terminal icrearusuario, fcrearusuario, inombre, fnombre, iapellido, fapellido, itelefono, ftelefono, iemail, femail, idireccion, fdireccion;
+terminal itienda, ftienda, icodigo, fcodigo, ipropietario, fpropietario, iimg, fimg;
+terminal icantidad, fcantidad, imarca, fmarca, icolor, fcolor, itam, ftam, isucursal, fsucursal, iproducto, fproducto;
+terminal String numero,id, cadenastring, correo, mas, menor, por, division, rq, ptn, apar, cpar, coma, illave, fllave;
+
+non terminal INICIO,LOG,ID,PASS, REQINICIO;
+non terminal Nodo CREARUSUARIO, PAR, PARUSU; 
+non terminal Nodo CREARTIENDA, PARTIENDA, LISTIENDA;
+non terminal MODIFICARTIENDA, MODIFICAR, MODTIENDA, LISTMODT, LISTMODT1;
+non terminal Nodo MOD;
+non terminal ELIMINARTIENDA;
+non terminal Nodo PRODUCTO, PARPRO, LISTPRO;
+non terminal MODPRO, MODIPROO, MODLISTPRO, LISTMODPRO, LISTMODPRO1;
+non terminal MODPRO2;
+non terminal Nodo OPERACIONES,OPERACIONES1, EXPRESION, NUM;
+non terminal ETIQUETAMATE, EMATE, EMATE1, PARAMETROS, PARAM;
+
+
+precedence left mas, menor;
+precedence left por, division;
+
+
+start with INICIO;
+
+INICIO          ::= REQINICIO:raiz{:parser.raiz = (Nodo)raiz;:};
+
+REQINICIO       ::= LOG:log                     {:RESULT = log;:}
+                 |  CREARUSUARIO:crearusuario   {:RESULT = crearusuario;:}
+                 |  CREARTIENDA:creartienda     {:RESULT = creartienda;:}
+                 |  MODIFICARTIENDA
+                 |  ELIMINARTIENDA
+                 |  PRODUCTO:crearproducto      {:RESULT = crearproducto;:}
+                 |  MODPRO
+                 |  MODPRO2
+                 //|  OPERACIONES:ope             {:RESULT = ope;:}
+                 //|  ETIQUETAMATE     
+                 ;
+
+LOG             ::= irequest iusuario ID:id PASS:pass fusuario frequest{:
+                        Nodo padre = new Nodo("Log");
+                        padre.hijos.add((Nodo)id);
+                        padre.hijos.add((Nodo)pass);
+                        RESULT = padre;
+                    :};
+    
+ID              ::= iid numero:ent fid{:
+                        Nodo padre = new Nodo("Id\n" +"del\n"+ "Usuario");
+                        Nodo hijo = new Nodo(ent);
+                        padre.hijos.add(hijo);
+                        RESULT = padre;
+                    :}; 
+
+PASS            ::= ipass id:id fpass{:
+                        Nodo padre = new Nodo("Password\n del\n Usuario");
+                        Nodo hijo = new Nodo(id);
+                        padre.hijos.add(hijo);
+                        RESULT = padre;
+                    :};
+
+
+CREARUSUARIO    ::= /*ETIQUETAMATE*/ irequest icrearusuario PARUSU:parametros fcrearusuario frequest
+                    {:
+                        Nodo padre = new Nodo("Crear Usuario");
+                        padre.hijos.add(parametros);
+                        RESULT = padre;
+                    :};
+
+PARUSU          ::= PARUSU:lista PAR:par{:
+                        lista.hijos.add(par);
+                        RESULT = lista;
+                    :}
+                 |  PAR:par{:
+                        Nodo lista = new Nodo("Parametros Usuario");
+                        lista.hijos.add(par);
+                        RESULT = lista;
+                    :}
+                 ;
+
+PAR             ::= iid numero:usuario fid
+                    {:
+                        Nodo padre = new Nodo("Id \n Usuario Creado");
+                        Nodo hijo = new Nodo(usuario);
+                        padre.hijos.add(hijo);
+                        RESULT = padre;
+                    :} 
+                 |  inombre cadenastring:usuarionombre fnombre
+                    {:
+                        
+                        String usunom = usuarionombre.replace("\"","");
+                        Nodo padre = new Nodo("Nombre \n Usuario Creado");
+                        Nodo hijo = new Nodo(usunom);
+                        padre.hijos.add(hijo);
+                        RESULT = padre;
+                    :} 
+                 |  iapellido cadenastring:usuarioapellido fapellido
+                    {:
+                        String usuape = usuarioapellido.replace("\"","");
+                        Nodo padre = new Nodo("Apellido \n Usuario Creado");
+                        Nodo hijo = new Nodo(usuape);
+                        padre.hijos.add(hijo);
+                        RESULT = padre;
+                    :} 
+                 |  ipass id:usuariopassword fpass
+                    {:
+                        Nodo padre = new Nodo("Password \n Usuario Creado");
+                        Nodo hijo = new Nodo(usuariopassword);
+                        padre.hijos.add(hijo);
+                        RESULT = padre;
+                    :} 
+                 |  itelefono numero:usuariotelefono ftelefono
+                    {:
+                        
+                        Nodo padre = new Nodo("Telefono\n Usuario Creado");
+                        Nodo hijo = new Nodo((String)usuariotelefono);
+                        padre.hijos.add(hijo);
+                        RESULT = padre;
+                    :} 
+                 |  iemail correo:usuariocorreo femail
+                    {:
+                        String usumail = usuariocorreo.replace("\"","");
+                        Nodo padre = new Nodo("Email \n Usuario Creado");
+                        Nodo hijo = new Nodo(usumail);
+                        padre.hijos.add(hijo);
+                        RESULT = padre;
+                    :} 
+                 |  idireccion cadenastring:usuariodireccion fdireccion
+                    {:
+                        String usudir = usuariodireccion.replace("\"","");
+                        Nodo padre = new Nodo("Direccion \n Usuario Creado");
+                        Nodo hijo = new Nodo(usudir);
+                        padre.hijos.add(hijo);
+                        RESULT = padre;
+                    :}
+                 ;
+                 
+
+/****REGISTRAR UNA TIENDA*****/
+
+CREARTIENDA     ::= /*ETIQUETAMATE*/ irequest itienda tiptip igual cadenastring dolar LISTIENDA:parametros ftienda frequest
+                    {:
+                        Nodo padre = new Nodo("Crear tienda");
+                        padre.hijos.add(parametros);
+                        RESULT = padre;
+                    :};
+                    
+
+LISTIENDA       ::= LISTIENDA:lista PARTIENDA:par
+                    {:
+                        lista.hijos.add(par);
+                        RESULT = lista;
+                    :}
+
+                 |  PARTIENDA:par
+                    {:
+                        Nodo lista =new Nodo("Parametros \n Tienda");
+                        lista.hijos.add(par);
+                        RESULT = lista;
+                    :}
+                 ;
+
+PARTIENDA       ::= icodigo numero:codtienda fcodigo
+                    {:
+                        Nodo padre = new Nodo("Codigo \n de \n Tienda");
+                        Nodo hijo = new Nodo(codtienda);
+                        padre.hijos.add(hijo);
+                        RESULT = padre;
+                    :}
+                 |  ipropietario numero:protienda fpropietario
+                    {:
+                        Nodo padre = new Nodo("Propietario \n de \n Tienda");
+                        Nodo hijo = new Nodo(protienda);
+                        padre.hijos.add(hijo);
+                        RESULT = padre;
+                    :}
+                 |  inombre cadenastring:nomtienda fnombre
+                    {:
+                        String nombretienda = nomtienda.replace("\"","");
+                        Nodo padre = new Nodo("Nombre \n de \n Tienda");
+                        Nodo hijo = new Nodo(nombretienda);
+                        padre.hijos.add(hijo);
+                        RESULT = padre;
+                        
+                    :}
+                 |  idireccion cadenastring:dirtienda fdireccion
+                    {:
+                        String direcciontienda = dirtienda.replace("\"","");
+                        Nodo padre = new Nodo("Direccion \n de \n Tienda");
+                        Nodo hijo = new Nodo(direcciontienda);
+                        padre.hijos.add(hijo);
+                        RESULT = padre;
+                    :}
+                 |  itelefono numero:teltienda ftelefono
+                    {:
+                        Nodo padre = new Nodo("Telefono \n de \n Tienda");
+                        Nodo hijo = new Nodo(teltienda);
+                        padre.hijos.add(hijo);
+                        RESULT = padre;
+                    :}
+                 |  iimg cadenastring:imgtienda fimg
+                    {:
+                        String imatienda = imgtienda.replace("\"","");
+                        Nodo padre = new Nodo("Imagen \n de \n tienda");
+                        Nodo hijo = new Nodo(imatienda);
+                        padre.hijos.add(hijo);
+                        RESULT = padre;
+                    :}
+                 ;    
+
+/****MODIFICAR UNA TIENDA Y ELIMINAR****/
+
+MODIFICARTIENDA ::= ETIQUETAMATE irequest MODIFICAR frequest;
+
+MODIFICAR       ::= MODIFICAR MODTIENDA 
+                 |  MODTIENDA 
+                 ;
+
+MODTIENDA       ::=  itienda LISTMODT menor dolar;
+
+LISTMODT        ::= LISTMODT LISTMODT1
+                 |  LISTMODT1
+                 ;
+
+LISTMODT1       ::= tiptip igual cadenastring
+                 |  codcod igual numero
+                 |  nomnom igual cadenastring
+                 |  propipropi igual numero
+                 |  teltel igual numero
+                 |  dirdir igual cadenastring
+                 |  coma
+                 ;
+
+
+/***REGISTRAR UN PRODUCTO***/
+
+PRODUCTO        ::= /*ETIQUETAMATE*/ irequest iproducto tiptip igual cadenastring dolar PARPRO:parametros fproducto frequest
+                    {:
+                        Nodo padre = new Nodo("Crear Producto");
+                        padre.hijos.add(parametros);
+                        RESULT = padre;
+                    :};
+
+PARPRO          ::= PARPRO:lista LISTPRO:par 
+                   {:
+                        lista.hijos.add(par);
+                        RESULT = lista;
+                    :}
+                 |  LISTPRO:par 
+                    {:
+                        Nodo lista = new Nodo("Parametros \n de \n Producto");
+                        lista.hijos.add(par);
+                        RESULT = lista;
+                    :};                 
+                 
+
+LISTPRO         ::= icodigo numero:arbola fcodigo
+                    {:
+                        Nodo padre = new Nodo("Codigo \n del producto \n creado");
+                        Nodo hijo = new Nodo(arbola);
+                        padre.hijos.add(hijo);
+                        RESULT = padre;
+                    :}
+                 |  inombre cadenastring:arbolbb fnombre
+                    {:
+                        String arbolb = arbolbb.replace("\"","");
+                        Nodo padre = new Nodo("Nombre \n del producto \n creado");
+                        Nodo hijo = new Nodo(arbolb);
+                        padre.hijos.add(hijo);
+                        RESULT = padre;
+                    :}
+                 |  icantidad   MOD:arbolc fcantidad
+                    {:
+                        RESULT = arbolc;
+                    :}
+                 |  imarca cadenastring:arboldd fmarca
+                    {:
+                        String arbold = arboldd.replace("\"","");
+                        Nodo padre = new Nodo("Marca \n del producto \n creado");
+                        Nodo hijo = new Nodo(arbold);
+                        padre.hijos.add(hijo);
+                        RESULT = padre;
+                    :}
+                 |  icolor cadenastring:arbolee fcolor
+                    {:
+                        String arbole = arbolee.replace("\"","");
+                        Nodo padre = new Nodo("Color \n del producto \n creado");
+                        Nodo hijo = new Nodo(arbole);
+                        padre.hijos.add(hijo);
+                        RESULT = padre;
+                    :}
+                 |  itam  MOD:arbolf ftam
+                    {:
+                        RESULT = arbolf;
+                    :}
+                 |  iimg cadenastring:arbolgg fimg
+                    {:
+                        String arbolg = arbolgg.replace("\"","");
+                        Nodo padre = new Nodo("Imagen \n del producto \n creado");
+                        Nodo hijo = new Nodo(arbolg);
+                        padre.hijos.add(hijo);
+                        RESULT = padre;
+                    :}
+                 |  isucursal   numero:arbolh fsucursal
+                    {:
+                        Nodo padre = new Nodo("Sucursal \n del producto \n creado");
+                        Nodo hijo = new Nodo(arbolh);
+                        padre.hijos.add(hijo);
+                        RESULT = padre;
+                    :}
+                 ;
+
+MOD             ::= NUM:num {:RESULT = num; :}
+                 |  OPERACIONES:ope {:RESULT = ope;:}
+                 |  cadenastring:cadena 
+                    {:
+                        String cad = cadena.replace("\"","");
+                        Nodo padre = new Nodo("Cadena");
+                        Nodo hijo = new Nodo(cad);
+                        padre.hijos.add(hijo);
+                        RESULT = padre;
+                    :};
+                 
+
+/***MODIFICAR UN PRODUCTO Y ELIMINAR***/
+
+MODPRO          ::= ETIQUETAMATE irequest MODLISTPRO:abbc {: RESULT = abbc;:} frequest;
+
+MODLISTPRO      ::= MODLISTPRO:aba MODIPROO:abb     {: String resul = aba +"\n"+ abb; RESULT = resul; :}
+                 |  MODIPROO:arboll                 {: RESULT = arboll; :}
+                 ;
+
+MODIPROO        ::= iproducto LISTMODPRO1:arbolk    {: RESULT = arbolk; :} menor dolar;
+
+
+LISTMODPRO1     ::= LISTMODPRO1:aba LISTMODPRO:abb  {: String resul = aba +"\n"+ abb; RESULT = resul; :}
+                 |  LISTMODPRO:arboli               {: RESULT = arboli; :}
+                 ;
+
+LISTMODPRO      ::= tiptip      igual MOD
+                 |  codcod      igual MOD:arbolj {: RESULT = arbolj; :}
+                 |  sucursucur  igual MOD:arbolk {: RESULT = arbolk; :} 
+                 |  nomnom      igual MOD
+                 |  cantcant    igual MOD:arboll {: RESULT = arboll; :}
+                 ;  
+
+
+/*OTRA FORMA DE QUE VENGA LO DE MODIFICAR PRODUCTO*/
+
+MODPRO2         ::= ETIQUETAMATE irequest itienda id igual numero dolar MODLISTPRO:ab {:RESULT = ab; :} ftienda frequest;
+
+
+/****ETIQUETAS MATE*****/
+
+ETIQUETAMATE    ::= imate nomnom igual cadenastring dolar  EMATE fmate
+                 ;
+
+EMATE           ::= EMATE EMATE1
+                 |  EMATE1
+                 ;
+
+EMATE1          ::= id apar PARAMETROS cpar igual OPERACIONES ptcoma
+                 |  cons id igual MOD ptcoma
+                 ;
+
+PARAMETROS      ::= PARAMETROS PARAM
+                 |  PARAM
+                 ;
+
+PARAM           ::= id
+                 |  coma
+                 ;
+
+
+/****OPERACIONES EOA ****/
+
+OPERACIONES     ::= illave OPERACIONES1:operaciones /*{: RESULT = arbolcompleto; :}*/ fllave
+                    {:
+                        Nodo padre = new Nodo("EOA");
+                        padre.hijos.add(operaciones);
+                        RESULT = padre;
+                    :};
+
+OPERACIONES1    ::= OPERACIONES1:lista EXPRESION:rcompleto1
+                    {:
+                       //String arbol = rcompleto +"\n" + rcompleto1;
+                       //RESULT = arbol;
+                       
+                       lista.hijos.add(rcompleto1);
+                       RESULT = lista;
+                    :}
+                 |  EXPRESION:rcompleto1
+                    {:
+                       //RESULT = rcompleto1;
+                       Nodo lista = new Nodo("Operaciones");
+                       lista.hijos.add(rcompleto1);
+                       RESULT = lista;
+                    :}
+                 ;
+
+EXPRESION       ::= EXPRESION:izq mas EXPRESION:der
+                    {:
+                      /* int val1 = Integer.parseInt((String)eizq);
+                       int val2 = Integer.parseInt((String)eder);
+                       int resu = val1 + val2;
+                       RESULT = String.valueOf(resu);*/
+
+                        Nodo padre = new Nodo("+");
+                        padre.hijos.add(izq);
+                        padre.hijos.add(der);
+                        RESULT = padre;
+                    :}
+                   | EXPRESION:izq menor EXPRESION:der
+                     {:
+                       /* int val1 = Integer.parseInt((String)eizq);
+                        int val2 = Integer.parseInt((String)eder);
+                        int resu = val1 - val2;
+                        RESULT = String.valueOf(resu);*/
+
+                        Nodo padre = new Nodo("-");
+                        padre.hijos.add(izq);
+                        padre.hijos.add(der);
+                        RESULT = padre;
+                     :}
+                   | EXPRESION:izq por EXPRESION:der 
+                     {:
+                       /* int val1 = Integer.parseInt((String)eizq);
+                        int val2 = Integer.parseInt((String)eder);
+                        int resu = val1 * val2;
+                        RESULT = String.valueOf(resu);*/
+                        
+                        Nodo padre = new Nodo("*");
+                        padre.hijos.add(izq);
+                        padre.hijos.add(der);
+                        RESULT = padre;
+
+                     :}
+                   | EXPRESION:izq division EXPRESION:der 
+                     {:
+                       /* int val1 = Integer.parseInt((String)eizq);
+                        int val2 = Integer.parseInt((String)eder);
+                        int resu = val1 / val2;
+                        
+                        RESULT = String.valueOf(resu);*/
+                        
+                        Nodo padre = new Nodo("/");
+                        padre.hijos.add(izq);
+                        padre.hijos.add(der);
+                        RESULT = padre;
+                        
+                     :}
+                   | ptn apar EXPRESION:bas coma EXPRESION:exp cpar
+                     {:
+                        /*double base = Double.parseDouble((String)bas);
+                        double exponente = Double.parseDouble((String)exp);
+                        int resu = (int)Math.pow(base, exponente);
+                        RESULT = String.valueOf(resu);*/
+
+                        Nodo padre = new Nodo("Potencia");
+                        padre.hijos.add(bas);
+                        padre.hijos.add(exp);
+                        RESULT = padre;
+                        
+                     :}
+                   | rq apar EXPRESION:izq coma EXPRESION:der cpar
+                     {:
+                       /* double entero = Double.parseDouble((String)izq);
+                        double radical = Double.parseDouble((String)der);
+                        int resu = (int)Math.pow(entero, 1/radical);
+                        RESULT = String.valueOf(resu);*/
+
+                        Nodo padre = new Nodo("Raiz");
+                        padre.hijos.add(izq);
+                        padre.hijos.add(der);
+                        RESULT = padre;
+                        
+                     :}
+                   | apar EXPRESION:hola cpar
+                    {:
+                        RESULT = hola;
+                    :}
+                   | NUM:dat
+                    {:
+                       RESULT=dat;
+                    :};
+
+
+NUM             ::= numero:n 
+                    {:
+                        Nodo padre = new Nodo("numero");
+                        Nodo hijo = new Nodo(n);
+                        padre.hijos.add(hijo);
+                        RESULT=padre;
+                    :};
